@@ -190,9 +190,60 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
+-- diagnostic config
+-- Configure diagnostics to show in a floating window
+vim.diagnostic.config {
+  -- You can disable virtual text if you prefer only floating windows
+  virtual_text = true,
+  -- Configure the floating window
+  float = {
+    source = true, -- Show the source of diagnostics
+    border = 'rounded', -- Add a rounded border (options: "none", "single", "double", "rounded")
+    header = '', -- No header
+    prefix = '', -- No prefix for each diagnostic
+    format = function(diagnostic)
+      -- You can customize the format of diagnostics here
+      local message = diagnostic.message
+      local source = diagnostic.source
+      local code = diagnostic.code or ''
+      if source then
+        return string.format('%s\n[%s] %s', message, source, code)
+      else
+        return message
+      end
+    end,
+  },
+  -- Show signs in the sign column
+  signs = true,
+}
+
+-- Set a shorter updatetime for quicker cursor hold detection (default is 4000ms)
+vim.opt.updatetime = 300 -- in milliseconds
+
+-- Now when you hold your cursor still for 300ms, the floating diagnostic will appear
+vim.cmd [[
+  autocmd CursorHold * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})
+]]
+
+-- Show all diagnostics in a buffer in a separate floating window
+vim.keymap.set('n', '<leader>d', vim.diagnostic.setloclist, { desc = 'Show all diagnostics in list' })
+
+-- Jump to the next diagnostic
+vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Previous diagnostic' })
+vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Next diagnostic' })
+-- Add keymappings to show diagnostics on hover or on demand
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic in floating window' })
+
+-- Optionally, show diagnostics when hovering with the cursor
+vim.cmd [[
+  autocmd CursorHold * lua vim.diagnostic.open_float(nil, {focus=false, scope="cursor"})
+]]
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
 --  See `:help vim.highlight.on_yank()`
@@ -614,19 +665,21 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
+        ts_ls = {},
+        cssls = {},
+        css_variables = {},
+        html = {},
+        pyright = {},
+        gopls = {},
         --
-
+        emmet_language_server = {},
+        dockerls = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
